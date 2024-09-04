@@ -1,0 +1,7 @@
+#dropdown-menu {
+    display: none;
+}
+
+#download-menu:hover > #dropdown-menu {
+    display: block;
+}
