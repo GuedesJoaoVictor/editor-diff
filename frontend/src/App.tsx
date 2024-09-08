@@ -43,7 +43,7 @@ const App = () => {
       </div>
       <InputDocTitle/>
       <div className="bg-white m-auto mt-2 rounded-xl overflow-hidden max-w-screen-xl">
-        <div ref={editorRef} className="bg-white min-h-fit mt-4 p-4" />
+        <div ref={editorRef} className="bg-white md:h-28 mt-4 p-4 min-h-editor" />
       </div>
     </div>
   );

@@ -1,12 +1,9 @@
-// server.js
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import htmlPdf, { CreateOptions } from "html-pdf"
-import Docxtemplater from "docxtemplater";
-import PizZip from "pizzip";
-import path from "path";
-import fs from "fs";
+import htmlPdf, { CreateOptions } from "html-pdf";
+import htmlDocx from "html-docx-js";
+import { Buffer } from "buffer";
 
 const app = express();
 app.use(cors());
@@ -25,43 +22,22 @@ app.post('/api/download/pdf', (req, res) => {
 });
 
 // Endpoint para gerar DOCX
-app.post('/api/download/docx', (req, res) => {
+app.post('/api/download/docx', async (req, res) => {
   const { content } = req.body;
 
-  console.log('Content received:', content);
+  console.log('HTML content received:', content);
 
-  // Carrega o arquivo de template DOCX
-  const templatePath = path.resolve(__dirname, 'templates', 'template.docx');
-  const templateContent = fs.readFileSync(templatePath, 'binary');
+  // Converte o HTML para o formato DOCX como Blob
+  const docxBlob = htmlDocx.asBlob(content);
 
-  // Cria uma instância do PizZip com o conteúdo do template
-  const zip = new PizZip(templateContent);
+  // Converte o Blob para Buffer
+  const arrayBuffer = await docxBlob.toLocaleString(); // Converte Blob para ArrayBuffer
+  const docxBuffer = Buffer.from(arrayBuffer); // Converte ArrayBuffer para Buffer
 
-  // Inicializa o Docxtemplater com o ZIP do template
-  const doc = new Docxtemplater(zip, {
-      paragraphLoop: true,
-      linebreaks: true,
-  });
-
-  // Define os dados que serão substituídos no template
-  doc.setData({
-      content: content, // Certifique-se que a chave 'content' corresponde ao placeholder no template DOCX
-  });
-
-  try {
-      // Renderiza o documento (substitui as variáveis)
-      doc.render();
-  } catch (error) {
-      console.error('Error rendering the document:', error);
-      return res.status(500).send('Error rendering the document');
-  }
-
-  // Gera o buffer do DOCX
-  const buffer = doc.getZip().generate({ type: 'nodebuffer' });
-
-  // Envia o documento gerado para o cliente
+  // Envia o buffer como arquivo DOCX
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-  res.send(buffer);
+  res.setHeader('Content-Disposition', 'attachment; filename=output.docx');
+  res.send(docxBuffer);
 });
 
 const PORT = process.env.PORT || 5000;
